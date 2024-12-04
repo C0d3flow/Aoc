@@ -55,7 +55,7 @@ fn sum_of_absolute_differences(numbers: &[(u32, u32)]) -> u32 {
 }
 
 fn main() {
-    let filename = "C:/git/AoC/hello_world/input.txt";
+    let filename = "./input.txt";
     match get_tuples_from_file(filename) {
         Ok(numbers) => {
             println!("Sum of distances: {:?}", sum_of_absolute_differences(&numbers));
