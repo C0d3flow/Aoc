@@ -1,6 +1,6 @@
 use std::fs::File;
 use std::io::{self, BufRead};
-
+use std::collections::HashMap;
 
 fn read_numbers_into_columns(filename: &str) -> io::Result<(Vec<u32>, Vec<u32>)> {
     let file = File::open(filename)?;
@@ -54,6 +54,19 @@ fn sum_of_absolute_differences(numbers: &[(u32, u32)]) -> u32 {
         .sum() 
 }
 
+fn sum_of_multiplied_occurences(a: &Vec<u32>, b: &Vec<u32>) -> u32 {
+    let mut sum= 0;
+    let mut counts = HashMap::new();
+    for &num in b {
+        *counts.entry(num).or_insert(0) += 1;
+    }
+    for &number in a {
+        sum += number * counts.get(&number).unwrap_or(&0);
+    }
+    sum
+}
+
+
 fn main() {
     let filename = "./input.txt";
     match get_tuples_from_file(filename) {
@@ -66,6 +79,7 @@ fn main() {
     }
     match read_numbers_into_columns(filename) {
         Ok((column1, column2)) => {
+            println!("Sum of multiplied occurences: {:?}", sum_of_multiplied_occurences(&column1, &column2));
             let combined: Vec<_> = column1.into_iter().zip(column2.into_iter()).collect();
             println!("Sum of sorted distances: {:?}", sum_of_absolute_differences(&combined));
         }
