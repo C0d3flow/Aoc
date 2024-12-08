@@ -22,12 +22,11 @@ fn main() -> io::Result<()> {
         }
 
         if is_rule_section {
-            // Parse rules
             let parts: Vec<&str> = line.split('|').collect();
             if let (Some(&x), Some(&y)) = (parts.get(0), parts.get(1)) {
                 let x: i32 = x.parse().unwrap();
                 let y: i32 = y.parse().unwrap();
-                rules.entry(x).or_insert(Vec::new()).push(y);
+                rules.entry(y).or_insert(Vec::new()).push(x);
             }
         } else {
             // Parse updates
@@ -38,21 +37,26 @@ fn main() -> io::Result<()> {
         }
     }
 
-    let mut sum_of_middle_pages = 0;
+    // Check updates for correctness
     let mut correct_lines = 0;
-    let mut incorrect_lines: Vec<Vec<i32>> = Vec::new();
+    let mut sum_of_correct_middle_pages = 0;
+    let mut incorrect_updates: Vec<Vec<i32>> = Vec::new();
+    let mut incorrect_lines: Vec<i32> = Vec::new(); 
+    let mut line_number = 0;
 
-    for update in updates {
+    for update in &updates {
         let mut correct_line = true;
+
         for (i, &page) in update.iter().enumerate() {
-            // Check if there are any rules for the current page
-            if let Some(dependent_pages) = rules.get(&page) {
-                for &dependent_page in dependent_pages {
-                    // Ensure `dependent_page` appears **after** `page` in the current update
-                    if let Some(pos) = update.iter().position(|&p| p == dependent_page) {
-                        if pos < i {
+            // Check if there are any dependencies for the current page
+            if let Some(required_pages) = rules.get(&page) {
+                for &required_page in required_pages {
+                    // Ensure `required_page` appears **before** `page` in the current update
+                    if let Some(pos) = update.iter().position(|&p| p == required_page) {
+                        if pos > i {
                             correct_line = false;
-                            incorrect_lines.push(update.clone());
+                            incorrect_updates.push(update.clone());
+                            incorrect_lines.push(line_number);
                             break;
                         }
                     }
@@ -62,14 +66,54 @@ fn main() -> io::Result<()> {
                 break;
             }
         }
+
         if correct_line {
-            sum_of_middle_pages += update[update.len()/2];
             correct_lines += 1;
+            sum_of_correct_middle_pages += update[update.len()/2];
         }
+        line_number+=1;
     }
 
+    let mut current_line = 0;
+    let mut sum_of_sorted_middle_pages = 0;
+    for update in &mut incorrect_updates {
+        print!("Line {} ", incorrect_lines[current_line]);
+        let mut i = 0;
+        while i < update.len() {
+            let page = update[i]; // Current page
+            if let Some(required_pages) = rules.get(&page) {
+                let mut swapped = false;
+                for &required_page in required_pages {
+                    if let Some(pos) = update.iter().position(|&p| p == required_page) {
+                        if pos > i {
+                            // Swap the pages
+                            update.swap(i, pos);
+                            print!(" Swapped {} {}", i, pos);
+                            swapped = true;
+                            break;
+                        }
+                    }
+                }
+                if swapped {
+                    // Re-check the current index
+                    if i > 0 {
+                        i -= 1;
+                    }
+                    continue;
+                }
+            }
+            i += 1; // Move to the next index only if no swap occurred
+        }
+        println!("");
+        // Calculate middle page after sorting
+        sum_of_sorted_middle_pages += update[update.len() / 2];
+        current_line += 1;
+    }
+
+
     println!("Correct updates: {}", correct_lines);
-    println!("Sum of middle pages in correct updates: {}", sum_of_middle_pages);
+    println!("Sum of correct middle pages: {}", sum_of_correct_middle_pages);
+    println!("Sum of sorted middle pages: {}", sum_of_sorted_middle_pages);
 
     Ok(())
 }
