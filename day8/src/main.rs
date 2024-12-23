@@ -75,7 +75,6 @@ fn check_grid(filename: &str) -> io::Result<u32> {
 
     let frequency_locations = get_frequency_locations(grid);
 
-    let mut prints = 0;
     let mut antinodes: [[u32; 50]; 50] = [[0; 50]; 50];
     for frequency in frequency_locations {
         if '.' == frequency.0 {
@@ -83,9 +82,7 @@ fn check_grid(filename: &str) -> io::Result<u32> {
         }
         place_antinodes_for_frequency(&frequency.1, &mut antinodes);
         if prints < 2 {
-            println!("Frequency: {}", frequency.0);
             calc_num_antinodes(antinodes);
-            prints += 1;
         }
     }
     let result = calc_num_antinodes(antinodes);
